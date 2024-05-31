@@ -13,11 +13,14 @@ import {
 } from "@/app/_components/ui/sheet";
 import { Barbershop, Service } from "@prisma/client";
 import { ptBR } from "date-fns/locale";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { generateDayTimeList } from "../_helpers/hours";
-import { format } from "date-fns";
+import { format, setHours } from "date-fns";
+import { saveBooking } from "../_actions/save-booking";
+import { setMinutes } from "date-fns/setMinutes";
+import { Loader2 } from "lucide-react";
 
 type ServiceItemProps = {
   service: Service;
@@ -30,12 +33,36 @@ const ServiceItem = ({
   barbershop,
   isAuthenticated,
 }: ServiceItemProps) => {
+  const { data } = useSession();
   const [date, setDate] = useState<Date | undefined>();
   const [hour, setHour] = useState<String | undefined>();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleBookingClick = () => {
     if (!isAuthenticated) {
       signIn("google");
+    }
+  };
+
+  const handleBookingSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!hour || !date || !data?.user) return;
+
+      const dateHour = Number(hour.split(":")[0]);
+      const dateMinutes = Number(hour.split(":")[1]);
+      const newDate = setMinutes(setHours(date, dateHour), dateMinutes);
+
+      await saveBooking({
+        serviceId: service.id,
+        barbershopId: barbershop.id,
+        date: newDate,
+        userId: (data.user as any).id,
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,7 +153,7 @@ const ServiceItem = ({
                     <div className="py-6 px-5 border-t border-solid border-secondary flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
                       {timeList.map((time) => (
                         <Button
-                          key="time"
+                          key={time}
                           variant={hour === time ? "default" : "outline"}
                           onClick={() => handleHourClick(time)}
                         >
@@ -175,7 +202,19 @@ const ServiceItem = ({
                     </Card>
                   </div>
                   <SheetFooter className="px-5">
-                    <Button disabled={!hour || !date}>Confirmar Reserva</Button>
+                    <Button
+                      disabled={!hour || !date || loading}
+                      onClick={handleBookingSubmit}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Carregando...
+                        </>
+                      ) : (
+                        "Confirmar Reserva"
+                      )}
+                    </Button>
                   </SheetFooter>
                 </SheetContent>
               </Sheet>
