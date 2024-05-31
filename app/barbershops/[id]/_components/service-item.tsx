@@ -21,6 +21,8 @@ import { format, setHours } from "date-fns";
 import { saveBooking } from "../_actions/save-booking";
 import { setMinutes } from "date-fns/setMinutes";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type ServiceItemProps = {
   service: Service;
@@ -37,6 +39,8 @@ const ServiceItem = ({
   const [date, setDate] = useState<Date | undefined>();
   const [hour, setHour] = useState<String | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleBookingClick = () => {
     if (!isAuthenticated) {
@@ -59,6 +63,23 @@ const ServiceItem = ({
         date: newDate,
         userId: (data.user as any).id,
       });
+
+      setIsSheetOpen(false);
+      toast("Reserva agendada!", {
+        description: `Sua reserva foi agendada, ${service.name}, ${format(
+          date,
+          "dd, 'de' MMMM",
+          {
+            locale: ptBR,
+          }
+        )} às ${hour}`,
+        action: {
+          label: "Visualizar",
+          onClick: () => router.push("/bookings"),
+        },
+      });
+      setDate(undefined);
+      setHour(undefined);
     } catch (error) {
       console.log(error);
     } finally {
@@ -103,7 +124,7 @@ const ServiceItem = ({
                   currency: "BRL",
                 }).format(Number(service.price))}
               </p>
-              <Sheet>
+              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger>
                   <Button variant="secondary" onClick={handleBookingClick}>
                     Reservar
