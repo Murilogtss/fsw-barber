@@ -33,14 +33,16 @@ export default async function Home() {
     <div>
       <Header />
 
-      <div className="px-5 pt-5">
-        <h2 className="text-xl font-bold">Olá, Murilo!</h2>
-        <p className="capitalize text-sm">
-          {format(new Date(), "EEEE',' dd 'de' MMMM", {
-            locale: ptBR,
-          })}
-        </p>
-      </div>
+      {session?.user && (
+        <div className="px-5 pt-5">
+          <h2 className="text-xl font-bold">Olá, {session.user.name}!</h2>
+          <p className="capitalize text-sm">
+            {format(new Date(), "EEEE',' dd 'de' MMMM", {
+              locale: ptBR,
+            })}
+          </p>
+        </div>
+      )}
 
       <div className="px-5 mt-6">
         <Search />
@@ -48,9 +50,11 @@ export default async function Home() {
 
       {session?.user && (
         <div>
-          <h2 className="px-5 mt-6 text-xs uppercase text-gray-400 font-bold mb-3">
-            Agendamentos
-          </h2>
+          {confirmedBookings.length > 0 && (
+            <h2 className="px-5 mt-6 text-xs uppercase text-gray-400 font-bold mb-3">
+              Agendamentos
+            </h2>
+          )}
           <div className="px-5 flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
             {confirmedBookings.map((booking) => (
               <BookingItem key={booking.id} booking={booking} />
