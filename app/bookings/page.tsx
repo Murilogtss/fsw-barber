@@ -62,7 +62,7 @@ const BookingsPage = async () => {
         </h2>
         {!finishedBookigs.length && (
           <p className="text-sm text-gray-400">
-            Não há agendamentos finalizado
+            Não há agendamentos finalizados
           </p>
         )}
 
